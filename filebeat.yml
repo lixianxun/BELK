@@ -1,0 +1,42 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  encoding: plain
+  paths:
+    - D:\dev\ELK\spool-logs\*.log
+  document_type: "spring-boot-log4j2" # 定义写入 ES 时的 _type 值
+  multiline:
+    #pattern: '^\s*(\d{4}|\d{2})\-(\d{2}|[a-zA-Z]{3})\-(\d{2}|\d{4})'   # 指定匹配的表达式（匹配以 2017-11-15 08:04:23:889 时间格式开头的字符串）
+    pattern: '^\s*("{)'                         # 指定匹配的表达式（匹配以 "{ 开头的字符串）
+    negate: true                                # 是否匹配到
+    match: after                                # 合并到上一行的末尾
+    max_lines: 1000                             # 最大的行数
+    timeout: 30s                                # 如果在规定的时候没有新的日志事件就不等待后面的日志
+  fields:
+    logsource: node1
+    logtype: spring-boot-log4j2
+    
+
+- input_type: log
+  paths:
+    - D:\dev\ELK\spool-logs\*.sys
+  document_type: "syslog" # 定义写入 ES 时的 _type 值
+  fields:
+    logsource: node1
+    logtype: syslog
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+
+#----------------------------- Logstash output --------------------------------
+output.logstash:
+  hosts: ["localhost:5044"]
+  worker: 1
+
+logging:
+  level: warning
+  to_files: true
+  to_syslog: false
+  
